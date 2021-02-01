@@ -1,0 +1,24 @@
+sudo: required
+services:
+  - dockerfile
+
+before_install:
+  - docker build -t tbuff100/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true tbuff100/react-test npm test
+
+after_sucess:
+  - docker build -t tbuff100/multi-client ./client
+  - docker build -t tbuff100/multi-nginx ./nginx
+  - docker build -t tbuff100/multi-server ./server
+  - docker build -t tbuff100/multi-worker ./worker
+  
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD | docker login -u "$DOCKER_ID" --password-stdin
+
+  # Take those images and push them to dockerhub
+  - docker push tbuff100/multi-client
+  - docker push tbuff100/multi-nginx
+  - docker push tbuff100/multi-server
+  - docker push tbuff100/multi-worker
